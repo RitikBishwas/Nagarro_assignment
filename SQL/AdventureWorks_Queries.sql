@@ -35,28 +35,54 @@ WHERE FirstName LIKE '%ss%';
 -- QUERY 4: Display the ProductId of the product with the second largest stock level
 -- Schema(s) involved: Production.Product
  
-SELECT 
-    ProductID
-FROM Production.Product
-ORDER BY StockLevel DESC
+-- SELECT 
+--     ProductID
+-- FROM Production.Product
+-- ORDER BY StockLevel DESC
+-- OFFSET 1 ROWS FETCH NEXT 1 ROWS ONLY;
+SELECT ProductID
+FROM Production.ProductInventory
+GROUP BY ProductID
+ORDER BY SUM(Quantity) DESC
 OFFSET 1 ROWS FETCH NEXT 1 ROWS ONLY;
+
 
 
 -- QUERY 5: Create a stored procedure that accepts the name of a product 
 -- and displays its ID, number, and availability
 -- Schema(s) involved: Production.Product
+-- CREATE PROCEDURE sp_GetProductInfo
+--     @ProductName NVARCHAR(50)
+-- AS
+-- BEGIN
+--     SELECT 
+--         ProductID,
+--         ProductNumber,
+--         Name,
+--         CASE 
+--             WHEN StockLevel > 0 THEN 'Available'
+--             ELSE 'Out of Stock'
+--         END AS Availability
+--     FROM Production.Product
+--     WHERE Name = @ProductName;
+-- END;
+
 CREATE PROCEDURE sp_GetProductInfo
     @ProductName NVARCHAR(50)
 AS
 BEGIN
     SELECT 
-        ProductID,
-        ProductNumber,
-        Name,
+        p.ProductID,
+        p.ProductNumber,
+        p.Name,
         CASE 
-            WHEN StockLevel > 0 THEN 'Available'
+            WHEN SUM(pi.Quantity) > 0 THEN 'Available'
             ELSE 'Out of Stock'
         END AS Availability
-    FROM Production.Product
-    WHERE Name = @ProductName;
+    FROM Production.Product p
+    LEFT JOIN Production.ProductInventory pi
+        ON p.ProductID = pi.ProductID
+    WHERE p.Name = @ProductName
+    GROUP BY p.ProductID, p.ProductNumber, p.Name;
 END;
+
