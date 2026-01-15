@@ -1,5 +1,4 @@
 
--- SQL Server AdventureWorks OLTP Database Queries
 
 -- QUERY 1: Display the Name and Color of the Product with the maximum weight
 -- Schema(s) involved: Production.Product
@@ -67,22 +66,18 @@ OFFSET 1 ROWS FETCH NEXT 1 ROWS ONLY;
 --     WHERE Name = @ProductName;
 -- END;
 
-CREATE PROCEDURE sp_GetProductInfo
-    @ProductName NVARCHAR(50)
+CREATE PROCEDURE Production.GetProductDetailsByName
+    @ProductName NVARCHAR(100)
 AS
 BEGIN
-    SELECT 
-        p.ProductID,
-        p.ProductNumber,
-        p.Name,
-        CASE 
-            WHEN SUM(pi.Quantity) > 0 THEN 'Available'
-            ELSE 'Out of Stock'
-        END AS Availability
-    FROM Production.Product p
-    LEFT JOIN Production.ProductInventory pi
-        ON p.ProductID = pi.ProductID
-    WHERE p.Name = @ProductName
-    GROUP BY p.ProductID, p.ProductNumber, p.Name;
-END;
 
+    SELECT 
+        ProductID,
+        ProductNumber,
+        CASE 
+            WHEN SellEndDate IS NULL THEN 'Available'
+            ELSE 'Not Available'
+        END AS Availability
+    FROM Production.Product
+    WHERE Name = @ProductName;
+END;
